@@ -1,4 +1,9 @@
 {
-  "name": "moviequery-app",
-  "slug": "moviequery-app"
+  "expo": {
+    "name": "moviequery-app",
+    "slug": "moviequery-app",
+    "plugins": [
+      "expo-router"
+    ]
+  }
 }
