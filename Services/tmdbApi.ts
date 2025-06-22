@@ -1,4 +1,3 @@
-// services/api.ts
 import axios from 'axios';
 import { TMDB_API_KEY } from '@env';
 

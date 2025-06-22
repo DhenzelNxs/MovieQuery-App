@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {Dimensions, Linking, ScrollView} from 'react-native';
+import {Dimensions, Linking, RefreshControl, ScrollView} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRouter } from 'expo-router';
@@ -22,7 +22,6 @@ import {
     TrailerText,
 } from './home.style';
 
-import Header from '../../../Components/Header/Header';
 import { useListUpcomingMovies } from '../../../hooks/home/useListUpcomingMovies';
 import { useListTopMovies } from '../../../hooks/home/useListTopMovies';
 import { useListTopSeries } from '../../../hooks/home/useListTopSeries';
@@ -33,7 +32,6 @@ import { useDebounce } from '../../../Utils/Debounce';
 import { Skeleton } from '../../../Components/Skeleton/Skeleton';
 import { ListMoviesTitle } from './Components/ListMoviesTitle';
 
-import styled from 'styled-components/native';
 import { RootStackParamList } from '../../index';
 import {SearchListContainer, SearchListItem, SearchListText} from "../Movie/movie.style";
 
@@ -45,14 +43,15 @@ export default function Home() {
     const carouselRef = useRef(null);
     const router = useRouter();
 
+    const [refreshing, setRefreshing] = useState(false);
     const [playingTrailerId, setPlayingTrailerId] = useState<number | null>(null);
     const [search, setSearch] = useState<string | null>(null);
     const debouncedSearch = useDebounce(search, 500);
 
-    const { data: upcoming = [], isLoading: isLoadingUpcomingMovies } = useListUpcomingMovies();
-    const { data: topMovies = [], isLoading: isLoadingTopMovies } = useListTopMovies();
-    const { data: topSeries = [], isLoading: isLoadingTopSeries } = useListTopSeries();
-    const { data: topRatedMovies, isLoading: isLoadingTopRatedMovies } = useListTopRatedMovies();
+    const { data: upcoming = [], isFetching: isLoadingUpcomingMovies, refetch: refetchUpcomingMovies } = useListUpcomingMovies();
+    const { data: topMovies = [], isFetching: isLoadingTopMovies, refetch: refetchTopMovies } = useListTopMovies();
+    const { data: topSeries = [], isFetching: isLoadingTopSeries, refetch: refetchTopSeries } = useListTopSeries();
+    const { data: topRatedMovies, isFetching: isLoadingTopRatedMovies, refetch: refetchTopRatedMovies } = useListTopRatedMovies();
     const { data: searchResults = [] } = useSearchContent({ query: debouncedSearch });
 
     const goToMovieDetail = (id: string, type: 'movie' | 'serie') => {
@@ -67,8 +66,29 @@ export default function Home() {
         }
     }, [playingTrailerId]);
 
+    const onRefresh = async () => {
+        setRefreshing(true);
+
+        await Promise.all([
+            refetchUpcomingMovies(),
+            refetchTopMovies(),
+            refetchTopSeries(),
+            refetchTopRatedMovies(),
+        ]);
+
+        setTimeout(() => setRefreshing(false), 2000);
+    };
+
     const renderItem = (item: any) => {
         const isPlaying = playingTrailerId === item.id;
+
+        if(isLoadingUpcomingMovies || refreshing) {
+            return (
+                <Card>
+                    <Skeleton />
+                </Card>
+            )
+        }
 
         return (
             <Card>
@@ -112,16 +132,9 @@ export default function Home() {
 
     return (
         <Container>
-            <Header
-                title="MovieQuery"
-                backgroundColor="#000"
-                leftIcon="menu"
-                color="#BDB29C"
-                rightIcon="user"
-                titleLeftIcon="search"
-            />
-
-            <ScrollView>
+            <ScrollView
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}
+            >
                 <SearchMovieInput
                     placeholder="Pesquise por um filme, uma série ou uma pessoa"
                     placeholderTextColor="#888"
@@ -159,13 +172,17 @@ export default function Home() {
                 />
 
                 <ListMoviesTitle title="Top 10 filmes no MovieQuery essa semana" />
-                <MoviesList data={topMovies} isLoading={isLoadingTopMovies} onCardPress={goToMovieDetail} />
+                <MoviesList data={topMovies} isLoading={isLoadingTopMovies || refreshing} onCardPress={goToMovieDetail} />
 
                 <ListMoviesTitle title="Top 10 séries no MovieQuery essa semana" />
-                <MoviesList data={topSeries} isLoading={isLoadingTopSeries} onCardPress={goToMovieDetail} />
+                <MoviesList data={topSeries} isLoading={isLoadingTopSeries || refreshing} onCardPress={goToMovieDetail} />
 
                 <ListMoviesTitle title="Interesses populares" />
-                <MoviesList data={topRatedMovies} isLoading={isLoadingTopRatedMovies} />
+                <MoviesList
+                    data={topRatedMovies}
+                    isLoading={isLoadingTopRatedMovies || refreshing}
+                    onCardPress={(id, type) => goToMovieDetail(id, 'movie')}
+                />
             </ScrollView>
         </Container>
     );

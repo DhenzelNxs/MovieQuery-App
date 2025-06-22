@@ -1,8 +1,20 @@
 import styled from 'styled-components/native';
+import IconButton from "../../../Components/IconButton";
 
 export const Container = styled.View`
     flex: 1;
     background-color: #ECDEC3;
+`;
+
+export const TopContainer = styled.View`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+`
+
+export const CustomButton = styled(IconButton)`
+    padding-right: 30px;
 `;
 
 export const MovieTitle = styled.Text`
@@ -84,7 +96,6 @@ export const MovieDescriptionContainer = styled.View`
     border-radius: 16px;
     margin: 8px 18px;
     elevation: 4;
-    shadow-color: #000;
     shadow-offset: 0px 2px;
     shadow-opacity: 0.1;
     shadow-radius: 8px;
