@@ -2,8 +2,33 @@
   "expo": {
     "name": "moviequery-app",
     "slug": "moviequery-app",
+    "scheme": "moviequery-app",
+    "ios": {
+      "bundleIdentifier": "com.dhenzelnexxus.moviequeryapp"
+    },
+    "android": {
+      "package": "com.dhenzelnexxus.moviequeryapp",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "moviequery-app",
+              "host": "callback"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b8e316cb-4616-4fdd-b9da-8f99a5d90b55"
+      }
+    }
   }
 }

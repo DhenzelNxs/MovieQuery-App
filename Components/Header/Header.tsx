@@ -1,8 +1,16 @@
-import React from 'react';
-import { GestureResponderEvent } from 'react-native';
-import {Container, IconButton, ProfileIconButton, Title, TitleContainer} from "./header.style";
+import React, { useState } from 'react';
+import { GestureResponderEvent, Image } from 'react-native';
+import {
+    Container,
+    IconButton,
+    ProfileIconButton,
+    Title,
+    TitleContainer,
+} from './header.style';
 import Icon from 'react-native-vector-icons/Feather';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
+import { useUserStore } from '../../Storage/User/useUser';
+import { Menu, Divider } from 'react-native-paper';
 
 export interface HeaderProps {
     title?: string;
@@ -25,8 +33,24 @@ export default function Header({
    height,
    backgroundColor,
    color,
-   titleLeftIcon
+   titleLeftIcon,
 }: HeaderProps) {
+    const { user, logout } = useUserStore((state) => state);
+    const [menuVisible, setMenuVisible] = useState(false);
+
+    const openMenu = () => setMenuVisible(true);
+    const closeMenu = () => setMenuVisible(false);
+
+    const handleProfile = () => {
+        closeMenu();
+        onRightPress?.({} as GestureResponderEvent);
+    };
+
+    const handleLogout = () => {
+        logout();
+        closeMenu();
+    };
+
     return (
         <Container height={height} backgroundColor={backgroundColor}>
             {leftIcon ? (
@@ -41,20 +65,46 @@ export default function Header({
 
             {title && (
                 <TitleContainer>
-                    {titleLeftIcon &&  <Icon name={titleLeftIcon} size={24} color={color}/>}
+                    {titleLeftIcon && <Icon name={titleLeftIcon} size={24} color={color} />}
                     <Title color={color}>{title}</Title>
                 </TitleContainer>
             )}
 
-            {rightIcon ? (
-                <ProfileIconButton onPress={onRightPress}>
-                    <FontAwesomeIcon name={rightIcon} size={24} color={color ?? '#000'} />
-                </ProfileIconButton>
-            ) : (
-                <ProfileIconButton disabled>
-                    <Icon name="square" size={24} color="transparent" />
-                </ProfileIconButton>
-            )}
+            <Menu
+                visible={menuVisible}
+                onDismiss={closeMenu}
+                anchor={
+                    <ProfileIconButton onPress={openMenu}>
+                        {user?.avatar?.gravatar?.hash ? (
+                            <Image
+                                source={{ uri: `https://www.gravatar.com/avatar/${user.avatar.gravatar.hash}` }}
+                                style={{ width: 32, height: 32, borderRadius: 16 }}
+                            />
+                        ) : (
+                            <FontAwesomeIcon name={rightIcon} size={24} color={color ?? '#000'} />
+                        )}
+                    </ProfileIconButton>
+                }
+                contentStyle={{ backgroundColor: '#ECDEC3' }}
+            >
+                <Menu.Item
+                    onPress={handleProfile}
+                    title="Perfil"
+                    leadingIcon="account"
+                    //@ts-ignore
+                    iconColor="#784831"
+                    titleStyle={{ color: '#784831' }}
+                />
+                <Divider />
+                <Menu.Item
+                    onPress={handleLogout}
+                    title="Sair"
+                    leadingIcon="logout"
+                    //@ts-ignore
+                    iconColor="#784831"
+                    titleStyle={{ color: '#784831' }}
+                />
+            </Menu>
         </Container>
     );
 }

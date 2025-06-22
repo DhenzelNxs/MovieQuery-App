@@ -8,13 +8,15 @@ const tmdbApi = axios.create({
     },
 });
 
-tmdbApi.interceptors.request.use((config) => {
+tmdbApi.interceptors.request.use(async (config) => {
     const apiKey = TMDB_API_KEY;
+
     config.params = {
         ...config.params,
         api_key: apiKey,
         language: 'pt-BR',
     };
+
     return config;
 });
 
