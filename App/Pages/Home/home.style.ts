@@ -14,9 +14,6 @@ export const SearchMovieInput = styled.TextInput`
     color: #000;
 `;
 
-export const CarouselContainer = styled.View`
-
-`
 
 export const Card = styled.View`
   width: 100%;

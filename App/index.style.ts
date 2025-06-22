@@ -5,48 +5,39 @@ export const Container = styled.View`
     background-color: #ECDEC3;
 `;
 
-export const SearchMovieInput = styled.TextInput`
-    background-color: #FFFFFF;
-    padding: 12px;
-    margin: 16px;
-    border-radius: 8px;
+export const ToastContainer = styled.View`
+    flex-direction: row;
+    align-items: center;
+    background-color: #ECDEC3;
+    border-left-color: #784831;
+    border-left-width: 5px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin: 0 10px;
+
+    shadow-color: #000;
+    shadow-opacity: 0.2;
+    shadow-radius: 8px;
+    shadow-offset: 0px 2px;
+    elevation: 5;
+`;
+
+export const IconContainer = styled.View`
+  margin-right: 12px;
+`;
+
+export const TextContent = styled.View`
+  flex: 1;
+`;
+
+export const ToastTitle = styled.Text`
+    color: #784831;
+    font-weight: bold;
     font-size: 16px;
-    color: #000;
 `;
 
-export const CarouselContainer = styled.View`
-
-`
-
-export const Card = styled.View`
-  width: 100%;
-  height: 300px;
-  border-radius: 16px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
-`;
-
-export const CardImage = styled.Image`
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  object-fit: cover;
-`;
-
-export const CardOverlay = styled.View`
-  position: absolute;
-  bottom: 0;
-  height: 60px;
-  width: 100%;
-  background: rgba(0, 0, 0, 0.4);
-`;
-
-export const CardTitle = styled.Text`
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  color: white;
-  font-size: 18px;
-  font-weight: bold;
+export const ToastMessage = styled.Text`
+    color: #784831;
+    font-size: 14px;
+    margin-top: 4px;
 `;

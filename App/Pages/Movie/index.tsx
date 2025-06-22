@@ -1,13 +1,13 @@
-import React, {useRef} from 'react';
+import React, {useCallback, useRef} from 'react';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../index';
 import {
-    Container,
+    Container, CustomButton,
     MovieBackdrop, MovieDescription, MovieDescriptionContainer, MovieDescriptionPoster,
     MoviePosterImage,
     MovieTimeYear,
     MovieTitle,
-    PlayMovieTrailerButton, TrailerButton, TrailerText, VideoWrapper,
+    PlayMovieTrailerButton, TopContainer, TrailerButton, TrailerText, VideoWrapper,
 } from './movie.style';
 import Header from '../../../Components/Header/Header';
 import { useGetMovie } from '../../../hooks/movie/useGetMovie';
@@ -16,14 +16,13 @@ import { TmdbImagesUrl } from '../../../Enums/TmdbImagesBaseUrl';
 import dayjs from 'dayjs';
 import { formatDuration } from '../../../Utils/Formats';
 import Feather from 'react-native-vector-icons/Feather';
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { WebView } from 'react-native-webview';
 import {ScrollView, Text, ActivityIndicator, View, Dimensions} from 'react-native';
 import { useGetMovieCredits } from '../../../hooks/movie/useGetMovieCredits';
 import AutoScrollCredits from './Components/AutoScrollCredits';
 import { useGetMovieComments } from '../../../hooks/movie/useGetMovieComments';
 import { FirstComment } from './Components/FirstComment';
-import { StarRating } from './Components/StarRating';
-import { convertRate10to5 } from '../../../Utils/Converters';
 import { CommentItem } from './Components/CommentItem';
 import {useSerieById} from "../../../hooks/movie/useGetSerie";
 import {useGetSerieCredits} from "../../../hooks/movie/useGetSerieCredits";
@@ -32,6 +31,9 @@ import {Card, CardImage, CardOverlay, CardTitle} from "../Home/home.style";
 import {Skeleton} from "../../../Components/Skeleton/Skeleton";
 import Carousel from "react-native-reanimated-carousel";
 import {ListMoviesTitle} from "../Home/Components/ListMoviesTitle";
+import {Rating} from "./Components/Rating";
+import {useFavoriteMovies} from "../../../Storage/Movie/useFavoriteMovies";
+import Toast from 'react-native-toast-message';
 
 const width = Dimensions.get('window').width;
 
@@ -43,6 +45,8 @@ export default function Movie() {
     const { id, type } = route.params;
     const navigation = useNavigation();
 
+    const { favorites, addMovie, removeMovie, isFavorite } = useFavoriteMovies((state) => state)
+
     const { data: movie, isLoading: loadingMovie,  } = useGetMovie({ id, type });
     const { data: movieCredits, isLoading: loadingCredits } = useGetMovieCredits({ id, type });
     const { data: movieComments = [], isLoading: loadingComments } = useGetMovieComments({ id, type });
@@ -50,7 +54,6 @@ export default function Movie() {
     const { data: serie = {}, isLoading: loadingSerie } = useSerieById({ id, type })
     const { data: serieCredits = {}, isLoading: loadingSerieCredits } = useGetSerieCredits({ id, type });
     const { data: serieComments = {}, isLoading: loadingSerieComments} = useGetSerieComments({ id, type });
-    console.log('serieCredits', serie);
 
     const [playingTrailerId, setPlayingTrailerId] = React.useState<string | null>(null);
 
@@ -59,7 +62,6 @@ export default function Movie() {
     const isLoading = loadingMovie || loadingCredits || loadingComments;
 
     const renderItem = (item: any) => {
-        const isPlaying = playingTrailerId === item.id;
         return (
             <>
                 {
@@ -84,18 +86,31 @@ export default function Movie() {
         );
     };
 
-    // @ts-ignore
+    console.log('favorites', favorites)
+
+    const isFavoriteMovie = movie?.id || serie?.id ? isFavorite(movie?.id || serie?.id) : false
+                                                                                                                                                                                                                                                                    
+    const handleFavoriteMovie = () => {
+        if (isFavoriteMovie)  {
+            removeMovie(movie?.id || serie?.id);
+            Toast.show({
+                type: 'success',
+                text1: `${movie?.title || serie?.name} desfavoritado!`,
+                text2: 'A obra foi removida dos seus favoritos.'
+            });
+            return;
+        }
+        addMovie(movie || serie);
+
+        Toast.show({
+            type: 'success',
+            text1: `${movie?.title || serie?.name} favoritado!`,
+            text2: 'Confira sua lista de favoritos.'
+        });
+    }
+
     return (
         <Container>
-            <Header
-                title="MovieQuery"
-                backgroundColor="#000"
-                leftIcon="menu"
-                color="#BDB29C"
-                rightIcon="user"
-                titleLeftIcon="search"
-            />
-
             <BackButton navigation={navigation} />
 
             {isLoading ? (
@@ -107,14 +122,25 @@ export default function Movie() {
                 </View>
             ) : (
                 <>
-                    <MovieTitle>{movie?.title || serie?.name}</MovieTitle>
-                    <MovieTimeYear>
-                        { type === 'movie' ? 'Filme' : 'Serie' } |
-                        {' '}{dayjs(movie?.release_date || serie?.first_air_date).year()} |
-                        {' '}{type === 'movie' ? formatDuration(movie?.runtime) : serie?.seasons?.length === 1 ? '1 Temporada' : `${serie?.seasons?.length} Temporadas`}
-                    </MovieTimeYear>
+                    <TopContainer>
+                        <View>
+                            <MovieTitle>{movie?.title || serie?.name}</MovieTitle>
+                            <MovieTimeYear>
+                                { type === 'movie' ? 'Filme' : 'Serie' } |
+                                {' '}{dayjs(movie?.release_date || serie?.first_air_date).year()} |
+                                {' '}{type === 'movie' ? formatDuration(movie?.runtime) : serie?.seasons?.length === 1 ? '1 Temporada' : `${serie?.seasons?.length} Temporadas`}
+                            </MovieTimeYear>
+                        </View>
+                        <CustomButton onPress={handleFavoriteMovie}>
+                            {
+                                isFavoriteMovie ? <MaterialIcons name={'bookmark'} size={30} color="#784831"/>
+                                    : <Feather name={'bookmark'} size={28} color="#784831"/>
+                            }
+                        </CustomButton>
+                    </TopContainer>
 
                     <ScrollView>
+
                         <MovieBackdrop>
                             {!playingTrailerId ? (
                                 <>
@@ -156,6 +182,8 @@ export default function Movie() {
                             <MovieDescription>{movie?.overview || serie?.overview}</MovieDescription>
                         </MovieDescriptionContainer>
 
+                        <Rating rating={type === 'movie' ? movie.vote_average : serie.vote_average} />
+
                         { /* @ts-ignore */ }
                         <AutoScrollCredits credits={
                             type === 'movie' ? movieCredits : serieCredits
@@ -184,19 +212,11 @@ export default function Movie() {
                             )
                         }
 
-
                         {
                             movieComments?.length && <FirstComment comment={
                                 type === 'movie' ? movieComments[0] : serieComments[0]
                             } />
                         }
-
-
-                        {movie?.vote_average != null && (
-                            <StarRating rating={convertRate10to5(
-                                type === 'movie' ? movie.vote_average : serie.vote_average
-                            )} />
-                        )}
 
                         {movieComments[1] && movieComments.slice(1).map(comment => (
                             <CommentItem key={comment.id} comment={comment} />
